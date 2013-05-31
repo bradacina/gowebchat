@@ -12,6 +12,7 @@ func ChatHandler(ws *websocket.Conn) {
 }
 
 func main() {
+	http.Handle("/", http.FileServer(http.Dir("../../html")))
 	http.Handle("/chat", websocket.Handler(ChatHandler))
 	err := http.ListenAndServe(":12345", nil)
 	if err != nil {
