@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Chat</title>
+  <meta name="description" content="Metacon Studios Chat">
+  <meta name="author" content="Bogdan Radacina">
+  
+  <!--[if lt IE 9]>
+  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+<body>
+<div id="ChatReceive" style="width:500px; height:500px; overflow:auto;"></div>
+<input id="ChatInput" type="text" style="width:400px" />
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+	var wss;
+
+	$(document).ready( function() {
+		
+		$("#ChatInput").keypress(sendMessage);
+		
+		wss = new WebSocket("ws://localhost:12345/chat?name=Bogdan");
+		
+		wss.onmessage = function(status) {
+			
+			var now = new Date();
+			
+			$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+ status.data + "<br/>");
+		}
+	});
+	
+	function sendMessage(event) {
+		if( event.charCode != 13)
+		{
+			return;
+		}
+		
+		var msg = $("#ChatInput").val();
+		$("#ChatInput").val("");
+		wss.send(msg);
+	}
+</script>
+
+</body>
+</html>
