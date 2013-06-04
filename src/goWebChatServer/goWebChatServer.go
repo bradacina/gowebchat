@@ -8,9 +8,7 @@ import (
 	"code.google.com/p/go.net/websocket"
 )
 
-var clients []*goWebChat.Client
-var registerClient chan *goWebChat.Client
-var unregisterClient chan *goWebChat.Client
+var clientsMap goWebChat.ClientsMap
 
 func ChatHandler(ws *websocket.Conn) {
 
@@ -34,11 +32,9 @@ func ChatHandler(ws *websocket.Conn) {
 	clientPtr := &client
 
 	defer client.Close()
-	defer func() { unregisterClient <- clientPtr }()
+	defer func() { clientsMap.UnregisterClient <- clientPtr }()
 
-	log.Println("Number of clients before: ", len(clients))
-
-	registerClient <- clientPtr
+	clientsMap.RegisterClient <- clientPtr
 
 	// client process loop
 	for {
@@ -46,7 +42,7 @@ func ChatHandler(ws *websocket.Conn) {
 		case readBytes := <-client.ReadChan:
 			log.Println("On ReadChan: ", readBytes)
 
-			go broadcastToAllClients(append([]byte(client.Name+" said-> "), readBytes...))
+			clientsMap.BroadcastToAll <- append([]byte(client.Name+" said-> "), readBytes...)
 
 		case <-client.Closed:
 			log.Println("Connection on client ", client.Name, " was closed")
@@ -55,46 +51,9 @@ func ChatHandler(ws *websocket.Conn) {
 	}
 }
 
-func broadcastToAllClients(msg []byte) {
-	for _, val := range clients {
-		val.WriteChan <- msg
-	}
-}
-
-func registrationLoop() {
-	for {
-		select {
-		case addClient := <-registerClient:
-			clients = append(clients, addClient)
-			log.Println("Adding client to array: ", addClient.Name)
-
-			broadcastToAllClients([]byte(addClient.Name + " has connected"))
-		case removeClient := <-unregisterClient:
-
-			log.Println("Removing client from array: ", removeClient.Name)
-			index := -1
-			for k, v := range clients {
-				if v == removeClient {
-					index = k
-					break
-				}
-			}
-
-			if index != -1 {
-				clients = append(clients[:index], clients[index+1:]...)
-				broadcastToAllClients([]byte(removeClient.Name + " has disconnected"))
-			}
-		}
-	}
-}
-
 func main() {
 
-	clients = make([]*goWebChat.Client, 0)
-	registerClient = make(chan *goWebChat.Client, 10)
-	unregisterClient = make(chan *goWebChat.Client, 10)
-
-	go registrationLoop()
+	clientsMap = goWebChat.NewClientsMap()
 
 	http.Handle("/", http.FileServer(http.Dir("../../html")))
 	http.Handle("/chat", websocket.Handler(ChatHandler))
@@ -102,4 +61,6 @@ func main() {
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
+
+	clientsMap.Destroy <- true
 }
