@@ -23,6 +23,16 @@
 		
 		wss = new WebSocket("ws://localhost:12345/chat?name=AAA");
 		
+		wss.onerror = function(status) {
+			debugger;
+			console.log(status);
+		}
+		
+		wss.onclose = function(status) {
+			debugger;
+			console.log(status);
+		}
+		
 		wss.onmessage = function(status) {
 			
 			var now = new Date();

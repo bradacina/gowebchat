@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd bin
+go build ../src/goWebChatServer/goWebChatServer.go
+
