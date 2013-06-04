@@ -1,6 +1,7 @@
 package goWebChat
 
 import (
+	"encoding/json"
 	"log"
 )
 
@@ -37,7 +38,31 @@ func (cM *ClientsMap) loop() {
 			log.Println("Adding client to array: ", addClient.Name)
 			log.Println("Number of clients currently in map: ", len(cM.clients))
 
-			cM.BroadcastToAll <- []byte(addClient.Name + " has connected")
+			// notify everyone that a new user has connected
+			var outboundChatMsg = NewServerStatusMessage(addClient.Name + " has connected")
+			outboundRaw, err := json.Marshal(outboundChatMsg)
+
+			if err != nil {
+				log.Println("Error marshaling message to JSON", outboundChatMsg)
+				return
+			}
+
+			cM.BroadcastToAll <- outboundRaw
+
+			// send the list of users to the newly connected user
+			var users string
+			for i, k := range cM.clients {
+				users = users + "," + k
+			}
+			var outboundClientListMsg = NewServerClientListMessage(users)
+			ountboundRaw, err := json.Marshal(outboundClientListMsg)
+
+			if err != nil {
+				log.Println("Error marshaling message to JSON", outboundChatMsg)
+				return
+			}
+
+			addClient.WriteChan <- outboundRaw
 
 		case removeClient := <-cM.UnregisterClient:
 			log.Println("Removing client from array: ", removeClient.Name)
@@ -51,7 +76,16 @@ func (cM *ClientsMap) loop() {
 
 			if index != -1 {
 				cM.clients = append(cM.clients[:index], cM.clients[index+1:]...)
-				cM.BroadcastToAll <- []byte(removeClient.Name + " has disconnected")
+
+				var outboundChatMsg = NewServerStatusMessage(removeClient.Name + " has disconnected")
+				outboundRaw, err := json.Marshal(outboundChatMsg)
+
+				if err != nil {
+					log.Println("Error marshaling message to JSON", outboundChatMsg)
+					return
+				}
+
+				cM.BroadcastToAll <- outboundRaw
 			}
 
 		case msg := <-cM.BroadcastToAll:

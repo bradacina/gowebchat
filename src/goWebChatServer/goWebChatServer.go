@@ -40,9 +40,9 @@ func ChatHandler(ws *websocket.Conn) {
 	for {
 		select {
 		case readBytes := <-client.ReadChan:
-			log.Println("On ReadChan: ", readBytes)
+			log.Println("On ReadChan: ", string(readBytes))
 
-			clientsMap.BroadcastToAll <- append([]byte(client.Name+" said-> "), readBytes...)
+			handleMessage(readBytes, client)
 
 		case <-client.Closed:
 			log.Println("Connection on client ", client.Name, " was closed")
