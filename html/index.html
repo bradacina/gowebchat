@@ -11,7 +11,10 @@
   <![endif]-->
 </head>
 <body>
-<div id="ChatReceive" style="width:500px; height:500px; overflow:auto;"></div>
+<div style="width:700px; height:500px">
+	<div id="ChatUsers" style="width:200px;height:500px; float:right; overflow:auto"></div>
+	<div id="ChatReceive" style="width:500px; height:500px; overflow:auto;"></div>
+</div>
 <input id="ChatInput" type="text" style="width:400px" />
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
@@ -30,14 +33,42 @@
 		
 		wss.onclose = function(status) {
 			debugger;
-			console.log(status);
+			$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> You have been disconnected<br/>");
 		}
 		
 		wss.onmessage = function(status) {
 			
+			if (!status || !status.data )
+			{
+				return;
+			}
+			
+			var msg;
+			
+			try{
+			 	msg = JSON.parse(status.data);
+			}
+			catch(err) {
+				return;
+			}
+			
+			if (!msg) {
+				return;
+			}
+			
 			var now = new Date();
 			
-			$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+ status.data + "<br/>");
+			if( msg.Type == "ServerChatMessage") {
+				$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+ msg.Name + " said -> " + msg.Chat + "<br/>");
+			}
+			
+			if(msg.Type == "ServerStatusMessage") {
+				$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+msg.Content + "<br/>");
+			}
+			
+			if(msg.Type == "ServerClientListMessage" ) {
+				
+			}
 		}
 	});
 	
@@ -49,7 +80,12 @@
 		
 		var msg = $("#ChatInput").val();
 		$("#ChatInput").val("");
-		wss.send(msg);
+		
+		var obj = new Object();
+		obj.Type = "ClientChat";
+		obj.Chat = msg;
+				
+		wss.send(JSON.stringify(obj));
 	}
 </script>
 
