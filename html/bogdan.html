@@ -21,7 +21,7 @@
 		
 		$("#ChatInput").keypress(sendMessage);
 		
-		wss = new WebSocket("ws://"+document.domain+":12345/chat?name=Bogdan");
+		wss = new WebSocket("ws://"+document.domain+":8081/chat?name=Bogdan");
 		
 		wss.onmessage = function(status) {
 			

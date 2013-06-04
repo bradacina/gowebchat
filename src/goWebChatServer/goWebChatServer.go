@@ -98,7 +98,7 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir("../../html")))
 	http.Handle("/chat", websocket.Handler(ChatHandler))
-	err := http.ListenAndServe(":12345", nil)
+	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
