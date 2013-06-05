@@ -62,8 +62,8 @@ func (c *Client) readLoop() {
 		c.logMessage("Read ", bytes[0:nBytes])
 	}
 	c.con.Close()
-	c.writeClose <- true
 	c.Closed <- true
+	c.writeClose <- true
 
 	c.logMessage("Read loop exiting.")
 }

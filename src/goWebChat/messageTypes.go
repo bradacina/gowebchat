@@ -35,6 +35,20 @@ type ServerClientListMessage struct {
 	Content string
 }
 
+// server message that notifies other clients when a new client
+// has connected
+type ServerClientJoinMessage struct {
+	Type string
+	Name string
+}
+
+// server message that notifies other clients that a particular
+// client has disconnected
+type ServerClientPartMessage struct {
+	Type string
+	Name string
+}
+
 func NewServerChatMessage(content string, sender string) ServerChatMessage {
 	return ServerChatMessage{Type: "ServerChatMessage", Name: sender, Chat: content}
 }
@@ -45,6 +59,14 @@ func NewServerStatusMessage(content string) ServerStatusMessage {
 
 func NewServerClientListMessage(content string) ServerClientListMessage {
 	return ServerClientListMessage{Type: "ServerClientListMessage", Content: content}
+}
+
+func NewServerClientJoinMessage(name string) ServerClientJoinMessage {
+	return ServerClientJoinMessage{Type: "ServerClientJoinMessage", Name: name}
+}
+
+func NewServerClientPartMessage(name string) ServerClientPartMessage {
+	return ServerClientPartMessage{Type: "ServerClientPartMessage", Name: name}
 }
 
 func UnmarshalClientChatMessage(msg []byte) (ClientChatMessage, error) {
