@@ -56,21 +56,58 @@
 				return;
 			}
 			
-			var now = new Date();
-			
 			if( msg.Type == "ServerChatMessage") {
-				$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+ msg.Name + " said -> " + msg.Chat + "<br/>");
+				addChatMessage(msg.Name + " said -> " + msg.Chat)
 			}
 			
-			if(msg.Type == "ServerStatusMessage") {
-				$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+msg.Content + "<br/>");
+			else if(msg.Type == "ServerStatusMessage") {
+				addChatMessage(msg.Content);
 			}
 			
-			if(msg.Type == "ServerClientListMessage" ) {
+			else if(msg.Type == "ServerClientListMessage" ) {
+				users = msg.Content.split(",");
 				
+				clearUsers();
+				
+				for( i=0; i< users.length; i++)
+				{
+					if( users[i].length > 0 ) { 
+						addUser(users[i]);
+					}
+				}
+			}
+			
+			else if(msg.Type == "ServerClientJoinMessage" ) {
+				addChatMessage(msg.Name + " has connected");
+				addUser(msg.Name);
+			}
+			
+			else if(msg.Type == "ServerClientPartMessage" ) {
+				addChatMessage(msg.Name + " has disconnected");
+				removeUser(msg.Name);
 			}
 		}
 	});
+	
+	function clearUsers() {
+		$("#ChatUsers").html("");
+	}
+	
+	function addUser(name) {
+		
+		var chatUsers = $("#ChatUsers");
+		chatUsers.append("<div id='" + name + "'>" + name + "</div>" + "<br/>");
+	}
+	
+	function removeUser(name) {
+		$("#"+name).remove();
+	}
+	
+	function addChatMessage(msg) {
+		var now = new Date();
+		
+		$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+msg + "<br/>");
+	}
 	
 	function sendMessage(event) {
 		if( event.charCode != 13)
