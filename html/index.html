@@ -12,7 +12,10 @@
 </head>
 <body>
 <div style="width:700px; height:500px">
-	<div id="ChatUsers" style="width:200px;height:500px; float:right; overflow:auto"></div>
+	<div style="width:200px;height:500px; float:right; overflow:auto">
+		<div>Connected Users:</div>
+		<div id="ChatUsers" ></div>
+	</div>
 	<div id="ChatReceive" style="width:500px; height:500px; overflow:auto;"></div>
 </div>
 <input id="ChatInput" type="text" style="width:400px" />
@@ -24,7 +27,7 @@
 		
 		$("#ChatInput").keypress(sendMessage);
 		
-		wss = new WebSocket("ws://"+document.domain+":8081/chat?name=AAA");
+		wss = new WebSocket("ws://"+document.domain+":8081/chat?name=User");
 		
 		wss.onerror = function(status) {
 			debugger;
@@ -57,7 +60,7 @@
 			}
 			
 			if( msg.Type == "ServerChatMessage") {
-				addChatMessage(msg.Name + " said -> " + msg.Chat)
+				addChatMessage("<b>"+msg.Name +"</b>" + " said -> " + msg.Chat)
 			}
 			
 			else if(msg.Type == "ServerStatusMessage") {
@@ -96,7 +99,7 @@
 	function addUser(name) {
 		
 		var chatUsers = $("#ChatUsers");
-		chatUsers.append("<div id='" + name + "'>" + name + "</div>" + "<br/>");
+		chatUsers.append("<div id='" + name + "'>" + name + "</div>");
 	}
 	
 	function removeUser(name) {

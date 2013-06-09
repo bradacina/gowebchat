@@ -4,12 +4,74 @@ import (
 	"encoding/json"
 	"goWebChat"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 
 	"code.google.com/p/go.net/websocket"
 )
 
 var clientsMap goWebChat.ClientsMap
+
+func BroadcastToAll(msg []byte) {
+	clients := clientsMap.GetAllClients()
+
+	for _, k := range clients {
+		k.WriteChan <- msg
+	}
+}
+
+func BroadcastToAllExcept(name string, msg []byte) {
+	clients := clientsMap.GetAllClients()
+
+	for _, k := range clients {
+		if k.Name != name {
+			k.WriteChan <- msg
+		}
+	}
+}
+
+func GetUniqueName(name string) string {
+	clients := clientsMap.GetAllClients()
+
+	good := true
+
+	for {
+		for _, k := range clients {
+			if k.Name == name {
+				good = false
+				break
+			}
+		}
+
+		if good {
+			return name
+		} else {
+			// attach a random number to the name
+			name = name + strconv.Itoa(rand.Intn(10))
+			good = true
+		}
+	}
+}
+
+func SendListOfConnectedClients(c *goWebChat.Client) {
+	var users string
+	clients := clientsMap.GetAllClients()
+
+	for _, k := range clients {
+		users = users + "," + k.Name
+	}
+
+	var outboundClientListMsg = goWebChat.NewServerClientListMessage(users)
+	outboundRaw, err := json.Marshal(outboundClientListMsg)
+
+	if err != nil {
+		log.Println("Error marshaling message to JSON", outboundClientListMsg)
+		return
+	}
+
+	c.WriteChan <- outboundRaw
+}
 
 func ChatHandler(ws *websocket.Conn) {
 
@@ -29,23 +91,15 @@ func ChatHandler(ws *websocket.Conn) {
 		return
 	}
 
-	uniqueName := make(chan string)
-	var newName string
+	newName := GetUniqueName(name[0])
 
-	clientsMap.GetUniqueName <- name[0]
-	select {
-	case newName = <-uniqueName:
-
-	}
-
-	client := goWebChat.NewClient(newname, ws)
+	client := goWebChat.NewClient(newName, ws)
 	clientPtr := &client
 
 	defer log.Println("Exiting handler function.")
-	//defer client.Close()
-	defer func() { clientsMap.UnregisterClient <- clientPtr }()
+	defer clientsMap.UnregisterClient(clientPtr)
 
-	clientsMap.RegisterClient <- clientPtr
+	clientsMap.RegisterClient(clientPtr)
 
 	// client process loop
 	for {
@@ -70,7 +124,7 @@ func ChatHandler(ws *websocket.Conn) {
 				return
 			}
 
-			clientsMap.BroadcastToAll <- outboundRaw
+			go BroadcastToAll(outboundRaw)
 
 		case connectedClient := <-clientsMap.ClientRegistered:
 			// notify everyone that a new user has connected
@@ -82,34 +136,9 @@ func ChatHandler(ws *websocket.Conn) {
 				return
 			}
 
-			clientsMap.BroadcastToAllExcept <- goWebChat.BroadcastToAllExcept{Name: connectedClient.Name, Content: outboundRaw}
+			go BroadcastToAllExcept(connectedClient.Name, outboundRaw)
 
-			retChan := make(chan []*goWebChat.Client)
-
-			clientsMap.GetAllClients <- retChan
-
-			// send the list of users to the newly connected user
-			go func() {
-				var users string
-
-				select {
-				case clients := <-retChan:
-
-					for _, k := range clients {
-						users = users + "," + k.Name
-					}
-				}
-
-				var outboundClientListMsg = goWebChat.NewServerClientListMessage(users)
-				outboundRaw, err = json.Marshal(outboundClientListMsg)
-
-				if err != nil {
-					log.Println("Error marshaling message to JSON", outboundChatMsg)
-					return
-				}
-
-				connectedClient.WriteChan <- outboundRaw
-			}()
+			go SendListOfConnectedClients(connectedClient)
 
 		}
 	}
@@ -125,6 +154,4 @@ func main() {
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
-
-	clientsMap.Destroy <- true
 }
