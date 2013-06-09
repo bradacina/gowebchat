@@ -21,7 +21,7 @@ func handleMessage(msg []byte, client goWebChat.Client) {
 	case "ClientChat":
 		chatMsg, err := goWebChat.UnmarshalClientChatMessage(msg)
 
-		if err != nil {
+		if err != nil || len(chatMsg.Chat) == 0 {
 			return
 		}
 
@@ -33,6 +33,6 @@ func handleMessage(msg []byte, client goWebChat.Client) {
 			return
 		}
 
-		clientsMap.BroadcastToAll <- outboundRaw
+		go BroadcastToAll(outboundRaw)
 	}
 }
