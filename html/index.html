@@ -27,15 +27,29 @@
 	<div style="clear:both" />
 </div>
 <input id="ChatInput" type="text" style="width:400px" />
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<br/>
+<input id="ChatClear" type="button" value="Clear Chat Log" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
 	var wss;
 	
 	var myName;
+	
+	var notifyNewActivityInterval;
+	
+	var originalDocumentTitle;
 
 	$(document).ready( function() {
 		
+		window.onbeforeunload = confirmLeave;
+		
+		originalDocumentTitle = window.document.title;
+		
+		$(window).bind("focus", stopNewActivityNotification);
+		
 		$("#ChangeNameButton").click(onChangeName);
+		
+		$("#ChatClear").click(onChatClear);
 		
 		$("#ChatInput").keypress(sendChat);
 		
@@ -114,6 +128,44 @@
 		}
 	});
 	
+	function confirmLeave() {
+		var message = "You are about to get disconnected from Chat.",
+  		e = e || window.event;
+  		// For IE and Firefox
+		if (e) {
+			e.returnValue = message;
+  		}
+
+  		// For Safari
+  		return message;
+	}
+	
+	function onChatClear() {
+		$("#ChatReceive").html("");
+	}
+	
+	function stopNewActivityNotification() {
+		clearInterval(notifyNewActivityInterval);
+		notifyNewActivityInterval = null;
+		window.document.title = originalDocumentTitle;
+	}
+	
+	function notifyNewActivity() {
+		if (window.document.hasFocus() || notifyNewActivityInterval)
+		{
+			return;
+		}
+		
+		notifyNewActivityInterval = setInterval( function() {
+			if( window.document.title == originalDocumentTitle) {
+				window.document.title = "New Activity";
+			}
+			else {
+				window.document.title = originalDocumentTitle;
+			}
+		}, 1000)
+	}
+	
 	function clientChangedName(oldName, newName) {
 		$("#"+oldName).replaceWith("<div id='"+newName + "'>"+newName + "</div>");
 		addChatMessage(oldName + " is now known as "+newName);
@@ -154,6 +206,8 @@
 		var now = new Date();
 		
 		$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+msg + "<br/>");
+		
+		notifyNewActivity();
 	}
 	
 	function sendChat(event) {

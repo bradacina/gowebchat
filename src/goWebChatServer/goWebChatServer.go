@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"code.google.com/p/go.net/websocket"
 )
@@ -75,11 +76,25 @@ func SendListOfConnectedClients(c *goWebChat.Client) {
 }
 
 func ChangeName(oldName string, newName string) string {
-	uniqueName := GetUniqueName(newName)
+	uniqueName := GetUniqueName(CleanupName(newName))
 
 	clientsMap.ReplaceName(oldName, uniqueName)
 
 	return uniqueName
+}
+
+func CleanupName(oldName string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z',
+			r >= 'A' && r <= 'Z',
+			r >= '0' && r <= '9',
+			r == '-',
+			r == '_':
+			return r
+		}
+		return -1
+	}, oldName)
 }
 
 func SendName(name string, client *goWebChat.Client) {
