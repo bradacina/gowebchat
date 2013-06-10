@@ -14,6 +14,11 @@ type ClientChatMessage struct {
 	Chat string
 }
 
+// change name message sent from client to server
+type ClientChangeNameMessage struct {
+	NewName string
+}
+
 // chat message sent from server to client
 type ServerChatMessage struct {
 	Type string
@@ -49,6 +54,17 @@ type ServerClientPartMessage struct {
 	Name string
 }
 
+type ServerSetNameMessage struct {
+	Type    string
+	NewName string
+}
+
+type ServerChangeNameMessage struct {
+	Type    string
+	NewName string
+	OldName string
+}
+
 func NewServerChatMessage(content string, sender string) ServerChatMessage {
 	return ServerChatMessage{Type: "ServerChatMessage", Name: sender, Chat: content}
 }
@@ -69,6 +85,14 @@ func NewServerClientPartMessage(name string) ServerClientPartMessage {
 	return ServerClientPartMessage{Type: "ServerClientPartMessage", Name: name}
 }
 
+func NewServerSetNameMessage(name string) ServerSetNameMessage {
+	return ServerSetNameMessage{Type: "ServerSetName", NewName: name}
+}
+
+func NewServerChangeNameMessage(oldName string, newName string) ServerChangeNameMessage {
+	return ServerChangeNameMessage{Type: "ServerChangeName", NewName: newName, OldName: oldName}
+}
+
 func UnmarshalClientChatMessage(msg []byte) (ClientChatMessage, error) {
 	var chatMsg ClientChatMessage
 	err := json.Unmarshal(msg, &chatMsg)
@@ -76,4 +100,13 @@ func UnmarshalClientChatMessage(msg []byte) (ClientChatMessage, error) {
 		log.Println("Error unmarshalling ClientChatMessage", err)
 	}
 	return chatMsg, err
+}
+
+func UnmarshalClientChangeNameMessage(msg []byte) (ClientChangeNameMessage, error) {
+	var changeNameMsg ClientChangeNameMessage
+	err := json.Unmarshal(msg, &changeNameMsg)
+	if err != nil {
+		log.Println("Error unmarshalling ClientChatMessage", err)
+	}
+	return changeNameMsg, err
 }
