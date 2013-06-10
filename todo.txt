@@ -1,3 +1,4 @@
-1. add javascript to let user confirm when leaving the page
-2. remove html inject in chat and user names
-3. replace spaces in user names with underscores
+1. improve look and feel
+2. remove html inject in chat
+5. add capability to log text
+6. add capability to register users
