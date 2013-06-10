@@ -67,3 +67,14 @@ func (cM *ClientsMap) GetAllClients() []*Client {
 	copy(result, cM.clients)
 	return result
 }
+
+func (cM *ClientsMap) ReplaceName(toReplace string, replacement string) {
+	cM.lock.Lock()
+	defer cM.lock.Unlock()
+
+	for i, k := range cM.clients {
+		if k.Name == toReplace {
+			cM.clients[i].Name = replacement
+		}
+	}
+}

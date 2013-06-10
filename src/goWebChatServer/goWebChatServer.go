@@ -45,6 +45,7 @@ func GetUniqueName(name string) string {
 		}
 
 		if good {
+			log.Println("Generated unique name: ", name)
 			return name
 		} else {
 			// attach a random number to the name
@@ -71,6 +72,28 @@ func SendListOfConnectedClients(c *goWebChat.Client) {
 	}
 
 	c.WriteChan <- outboundRaw
+}
+
+func ChangeName(oldName string, newName string) string {
+	uniqueName := GetUniqueName(newName)
+
+	clientsMap.ReplaceName(oldName, uniqueName)
+
+	return uniqueName
+}
+
+func SendName(name string, client *goWebChat.Client) {
+	// send the new name back to client
+	var outboundSetNameMsg = goWebChat.NewServerSetNameMessage(name)
+	outboundSetNameRaw, err := json.Marshal(outboundSetNameMsg)
+
+	if err != nil {
+		log.Println("Error marshaling message to JSON", outboundSetNameMsg)
+		return
+	}
+
+	client.WriteChan <- outboundSetNameRaw
+
 }
 
 func ChatHandler(ws *websocket.Conn) {
@@ -137,6 +160,8 @@ func ChatHandler(ws *websocket.Conn) {
 			}
 
 			go BroadcastToAllExcept(connectedClient.Name, outboundRaw)
+
+			go SendName(connectedClient.Name, connectedClient)
 
 			go SendListOfConnectedClients(connectedClient)
 
