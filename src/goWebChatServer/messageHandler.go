@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"goWebChat"
+	"html"
 	"log"
 )
 
@@ -26,7 +27,7 @@ func handleMessage(msg []byte, client goWebChat.Client) {
 			return
 		}
 
-		var outboundChatMsg = goWebChat.NewServerChatMessage(chatMsg.Chat, client.Name)
+		var outboundChatMsg = goWebChat.NewServerChatMessage(html.EscapeString(chatMsg.Chat), client.Name)
 		outboundRaw, err := json.Marshal(outboundChatMsg)
 
 		if err != nil {
