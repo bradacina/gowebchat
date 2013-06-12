@@ -3,16 +3,16 @@ textarea:focus, input:focus{
 }
 
 input[type=text] {
-background-color:transparent;
-border: 0px solid;
-margin-left:10px;
-margin-right:10px;
+	background-color:transparent;
+	border: 0px solid;
+	margin-left:10px;
+	margin-right:10px;
 }
 
 .text-input-wrap {
-border-radius:15px;
-background:#FFFFFF;
-display:inline-block;
+	border-radius:15px;
+	background:#FFFFFF;
+	display:inline-block;
 }
 
 #ChatReceive, #ChatUsers {
@@ -25,13 +25,17 @@ display:inline-block;
 	padding-top: 5px;
 	padding-bottom: 5px;
 	margin: 5px;
+	resize: vertical;
+	height:100px;
+	overflow: auto;
 }
 
 #ChatReceive a {
 	color: #cc0000;
-	background: #000066;
+	background: rgb(37,37,102);
 	border-radius: 5px;
-	padding: 5px;
+	padding-left: 5px;
+	padding-right: 5px;
 }
 
 input[type=button] {

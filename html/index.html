@@ -13,7 +13,7 @@
 </head>
 <body style="font-size:14px;background:#4066A3;color:#FFFFFF">
 <div style="width:750px; height:500px">
-	<div style="width:200px;height:500px; float:right; overflow:auto;margin-left:10px">
+	<div style="width:200px; float:right;margin-left:10px">
 		<div>Connected Users:</div>
 		<div id="ChatUsers" ></div>
 	</div>
@@ -25,15 +25,16 @@
 			</div>
 			<input class="red-background" id="ChangeNameButton" type="button" value="Change Name" />
 		</div>
-		<div id="ChatReceive" style="width:500px; height:500px; overflow:auto;"></div>
+		<div id="ChatReceive" style="width:500px;"></div>
+		<div class="text-input-wrap">
+			<input id="ChatInput" type="text" style="width:400px" />
+		</div>
+		<input id="ChatSend" type="button" value="Send" />
+		<br/>
+		<input class="margin-top-5" id="ChatClear" type="button" value="Clear Chat Log" />
 	</div>
 	<div style="clear:both" />
 </div>
-<div class="text-input-wrap">
-	<input id="ChatInput" type="text" style="width:400px" />
-</div>
-<br/>
-<input class="margin-top-5" id="ChatClear" type="button" value="Clear Chat Log" />
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
 	var wss;
@@ -54,9 +55,13 @@
 		
 		$("#ChatClear").click(onChatClear);
 		
+		$("#ChatSend").click(function() {	
+			sendChat({charCode:13});
+		});
+		
 		$("#ChatInput").keypress(sendChat);
 		
-		wss = new WebSocket("ws://"+document.domain+":8081/chat?name=User");
+		wss = new WebSocket("ws://"+document.domain+":8081/chat?name=User"+Math.floor(Math.random()*100+1));
 		
 		wss.onerror = function(status) {
 			debugger;
@@ -211,10 +216,14 @@
 		var now = new Date();
 		
 		msg = replaceURLWithHTMLLinks(msg);
-		
+
+		var isAtBottom = isScrollBottom();	
+						
 		$("#ChatReceive").append("<"+ now.toLocaleTimeString() + "> "+msg + "<br/>");
 		
-		$("#ChatReceive").animate({scrollTop:$("#ChatReceive")[0].scrollHeight}, 100); 
+		if (isAtBottom) {
+			$("#ChatReceive").animate({scrollTop:$("#ChatReceive")[0].scrollHeight}, 100); 
+		}
 		
 		notifyNewActivity();
 	}
@@ -228,6 +237,10 @@
 		var msg = $("#ChatInput").val();
 		$("#ChatInput").val("");
 		
+		if(!msg) {
+			return;
+		}
+		
 		var obj = new Object();
 		obj.Type = "ClientChat";
 		obj.Chat = msg;
@@ -238,6 +251,15 @@
 	function replaceURLWithHTMLLinks(text) { 
 		var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/i; 
 		return text.replace(exp,"<a href='$1' target=\"_blank\">$1</a>"); 
+	}
+	
+	function isScrollBottom() { 
+  		var element = document.getElementById("ChatReceive");
+		if( Math.abs(element.scrollTop - element.scrollHeight + element.offsetHeight) < 20 ) {
+			return true;
+		}
+		
+		return false;
 	}
 </script>
 
