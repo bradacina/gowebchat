@@ -27,7 +27,8 @@ func handleMessage(msg []byte, client goWebChat.Client) {
 			return
 		}
 
-		var outboundChatMsg = goWebChat.NewServerChatMessage(html.EscapeString(chatMsg.Chat), client.Name)
+		chatMessageContent := html.EscapeString(chatMsg.Chat)
+		var outboundChatMsg = goWebChat.NewServerChatMessage(chatMessageContent, client.Name)
 		outboundRaw, err := json.Marshal(outboundChatMsg)
 
 		if err != nil {
