@@ -210,6 +210,8 @@
 	function addChatMessage(msg) {
 		var now = new Date();
 		
+		msg = replaceURLWithHTMLLinks(msg);
+		
 		$("#ChatReceive").append("<"+ now.toLocaleTimeString() + "> "+msg + "<br/>");
 		
 		$("#ChatReceive").animate({scrollTop:$("#ChatReceive")[0].scrollHeight}, 100); 
@@ -231,6 +233,11 @@
 		obj.Chat = msg;
 				
 		wss.send(JSON.stringify(obj));
+	}
+	
+	function replaceURLWithHTMLLinks(text) { 
+		var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/i; 
+		return text.replace(exp,"<a href='$1' target=\"_blank\">$1</a>"); 
 	}
 </script>
 
