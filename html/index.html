@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" type="text/css" href="style.css">
   <meta charset="utf-8">
   <title>Chat</title>
   <meta name="description" content="Metacon Studios Chat">
@@ -10,8 +11,8 @@
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
 </head>
-<body style="font-size:14px;">
-<div style="width:720px; height:500px">
+<body style="font-size:14px;background:#4066A3;color:#FFFFFF">
+<div style="width:750px; height:500px">
 	<div style="width:200px;height:500px; float:right; overflow:auto;margin-left:10px">
 		<div>Connected Users:</div>
 		<div id="ChatUsers" ></div>
@@ -19,16 +20,20 @@
 	<div>
 		<div> 
 			Your name is: 
-			<input id="NameInput" type="text" value="User" />
-			<input id="ChangeNameButton" type="button" value="Change Name" />
+			<div class="text-input-wrap">
+				<input id="NameInput" type="text" value="User" />
+			</div>
+			<input class="red-background" id="ChangeNameButton" type="button" value="Change Name" />
 		</div>
 		<div id="ChatReceive" style="width:500px; height:500px; overflow:auto;"></div>
 	</div>
 	<div style="clear:both" />
 </div>
-<input id="ChatInput" type="text" style="width:400px" />
+<div class="text-input-wrap">
+	<input id="ChatInput" type="text" style="width:400px" />
+</div>
 <br/>
-<input id="ChatClear" type="button" value="Clear Chat Log" />
+<input class="margin-top-5" id="ChatClear" type="button" value="Clear Chat Log" />
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script>
 	var wss;
@@ -37,13 +42,11 @@
 	
 	var notifyNewActivityInterval;
 	
-	var originalDocumentTitle;
+	var originalDocumentTitle = window.document.title;
 
 	$(document).ready( function() {
 		
 		window.onbeforeunload = confirmLeave;
-		
-		originalDocumentTitle = window.document.title;
 		
 		$(window).bind("focus", stopNewActivityNotification);
 		
@@ -147,7 +150,9 @@
 	function stopNewActivityNotification() {
 		clearInterval(notifyNewActivityInterval);
 		notifyNewActivityInterval = null;
-		window.document.title = originalDocumentTitle;
+		setTimeout( function() {
+			window.document.title = originalDocumentTitle;
+			}, 100 );
 	}
 	
 	function notifyNewActivity() {
@@ -168,14 +173,14 @@
 	
 	function clientChangedName(oldName, newName) {
 		$("#"+oldName).replaceWith("<div id='"+newName + "'>"+newName + "</div>");
-		addChatMessage(oldName + " is now known as "+newName);
+		addChatMessage(oldName + " changed name to "+newName);
 	}
 	
 	function setName(newName) {
 		$("#"+myName).replaceWith("<div id='" + newName + "'>" + newName + "</div>");
 		myName = newName;
 		$("#NameInput").val(newName);
-		addChatMessage("You are now known as " + newName);
+		addChatMessage("Your name is now " + newName);
 	}
 	
 	function onChangeName() {
@@ -205,7 +210,9 @@
 	function addChatMessage(msg) {
 		var now = new Date();
 		
-		$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> "+msg + "<br/>");
+		$("#ChatReceive").append("<"+ now.toLocaleTimeString() + "> "+msg + "<br/>");
+		
+		$("#ChatReceive").animate({scrollTop:$("#ChatReceive")[0].scrollHeight}, 100); 
 		
 		notifyNewActivity();
 	}
