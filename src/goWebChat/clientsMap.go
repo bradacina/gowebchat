@@ -78,3 +78,15 @@ func (cM *ClientsMap) ReplaceName(toReplace string, replacement string) {
 		}
 	}
 }
+
+func (cM *ClientsMap) GetClient(name string) (*Client, bool) {
+	cM.lock.Lock()
+	defer cM.lock.Unlock()
+
+	for _, k := range cM.clients {
+		if k.Name == name {
+			return k, true
+		}
+	}
+	return nil, false
+}

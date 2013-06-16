@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"goWebChat"
 	"log"
 	"math/rand"
@@ -13,24 +12,6 @@ import (
 )
 
 var clientsMap goWebChat.ClientsMap
-
-func BroadcastToAll(msg []byte) {
-	clients := clientsMap.GetAllClients()
-
-	for _, k := range clients {
-		k.WriteChan <- msg
-	}
-}
-
-func BroadcastToAllExcept(name string, msg []byte) {
-	clients := clientsMap.GetAllClients()
-
-	for _, k := range clients {
-		if k.Name != name {
-			k.WriteChan <- msg
-		}
-	}
-}
 
 func GetUniqueName(name string) string {
 	clients := clientsMap.GetAllClients()
@@ -56,25 +37,6 @@ func GetUniqueName(name string) string {
 	}
 }
 
-func SendListOfConnectedClients(c *goWebChat.Client) {
-	var users string
-	clients := clientsMap.GetAllClients()
-
-	for _, k := range clients {
-		users = users + "," + k.Name
-	}
-
-	var outboundClientListMsg = goWebChat.NewServerClientListMessage(users)
-	outboundRaw, err := json.Marshal(outboundClientListMsg)
-
-	if err != nil {
-		log.Println("Error marshaling message to JSON", outboundClientListMsg)
-		return
-	}
-
-	c.WriteChan <- outboundRaw
-}
-
 func ChangeName(oldName string, newName string) string {
 	uniqueName := GetUniqueName(CleanupName(newName))
 
@@ -97,20 +59,6 @@ func CleanupName(oldName string) string {
 	}, oldName)
 }
 
-func SendName(name string, client *goWebChat.Client) {
-	// send the new name back to client
-	var outboundSetNameMsg = goWebChat.NewServerSetNameMessage(name)
-	outboundSetNameRaw, err := json.Marshal(outboundSetNameMsg)
-
-	if err != nil {
-		log.Println("Error marshaling message to JSON", outboundSetNameMsg)
-		return
-	}
-
-	client.WriteChan <- outboundSetNameRaw
-
-}
-
 func ChatHandler(ws *websocket.Conn) {
 
 	req := ws.Request()
@@ -131,7 +79,7 @@ func ChatHandler(ws *websocket.Conn) {
 
 	newName := GetUniqueName(name[0])
 
-	client := goWebChat.NewClient(newName, ws)
+	client := goWebChat.NewClient(newName, ws, req.UserAgent(), req.RemoteAddr)
 	clientPtr := &client
 
 	defer log.Println("Exiting handler function.")
@@ -149,37 +97,24 @@ func ChatHandler(ws *websocket.Conn) {
 		case readBytes := <-clientPtr.ReadChan:
 			log.Println("On ReadChan: ", string(readBytes))
 
-			handleMessage(readBytes, client)
+			handleMessage(readBytes, clientPtr)
 
 		case disconnectedClient := <-clientsMap.ClientUnregistered:
 
 			// notify everyone that a user has disconnected
 			var outboundChatMsg = goWebChat.NewServerClientPartMessage(disconnectedClient.Name)
-			outboundRaw, err := json.Marshal(outboundChatMsg)
 
-			if err != nil {
-				log.Println("Error marshaling message to JSON", outboundChatMsg)
-				return
-			}
-
-			go BroadcastToAll(outboundRaw)
+			go broadcastToAll(outboundChatMsg)
 
 		case connectedClient := <-clientsMap.ClientRegistered:
 			// notify everyone that a new user has connected
 			var outboundChatMsg = goWebChat.NewServerClientJoinMessage(connectedClient.Name)
-			outboundRaw, err := json.Marshal(outboundChatMsg)
 
-			if err != nil {
-				log.Println("Error marshaling message to JSON", outboundChatMsg)
-				return
-			}
+			go broadcastToAllExcept(connectedClient.Name, outboundChatMsg)
 
-			go BroadcastToAllExcept(connectedClient.Name, outboundRaw)
+			go sendName(connectedClient.Name, connectedClient)
 
-			go SendName(connectedClient.Name, connectedClient)
-
-			go SendListOfConnectedClients(connectedClient)
-
+			go sendListOfConnectedClients(connectedClient)
 		}
 	}
 }
