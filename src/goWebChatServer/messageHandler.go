@@ -2,12 +2,64 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"goWebChat"
 	"html"
 	"log"
+	"strings"
 )
 
-func handleMessage(msg []byte, client goWebChat.Client) {
+func handleCommand(msg string, client *goWebChat.Client) {
+	log.Println("Got command message: ", msg)
+
+	tokens := strings.Split(msg, " ")
+	if len(tokens) == 0 {
+		return
+	}
+
+	cmd := tokens[0]
+	args := tokens[1:]
+
+	switch cmd {
+	case "login":
+		if len(args) == 0 {
+			return
+		}
+
+		if args[0] == "metaconPass" {
+			client.IsAdmin = true
+			sendStatusMessage(client, "You are now Admin.")
+		}
+	case "logout":
+		client.IsAdmin = false
+		sendStatusMessage(client, "You are no longer Admin.")
+	case "whois":
+		if len(args) == 0 || !client.IsAdmin {
+			return
+		}
+
+		whoisClient, ok := clientsMap.GetClient(args[0])
+
+		if ok {
+			msg := fmt.Sprintf("<b>%v</b> (Admin:<b>%v</b>) has connected from <b>%v</b> using\n<b>%v</b>.",
+				whoisClient.Name, whoisClient.IsAdmin, whoisClient.IpAddr, whoisClient.UserAgent)
+			sendStatusMessage(client, msg)
+		}
+
+	case "kick":
+		if len(args) == 0 || !client.IsAdmin {
+			return
+		}
+
+		clientToKick, ok := clientsMap.GetClient(args[0])
+
+		if ok {
+			clientToKick.Close()
+		}
+	}
+}
+
+func handleMessage(msg []byte, client *goWebChat.Client) {
 
 	var messageType goWebChat.MessageType
 
@@ -27,16 +79,16 @@ func handleMessage(msg []byte, client goWebChat.Client) {
 			return
 		}
 
-		chatMessageContent := html.EscapeString(chatMsg.Chat)
-		var outboundChatMsg = goWebChat.NewServerChatMessage(chatMessageContent, client.Name)
-		outboundRaw, err := json.Marshal(outboundChatMsg)
-
-		if err != nil {
-			log.Println("Error marshaling message to JSON", outboundChatMsg)
+		// treat special case if chat message starts with / which means it's a command
+		if chatMsg.Chat[0] == '/' {
+			handleCommand(chatMsg.Chat[1:], client)
 			return
 		}
 
-		go BroadcastToAll(outboundRaw)
+		chatMessageContent := html.EscapeString(chatMsg.Chat)
+		var outboundChatMsg = goWebChat.NewServerChatMessage(chatMessageContent, client.Name)
+
+		go broadcastToAll(outboundChatMsg)
 	case "ChangeName":
 		changeNameMsg, err := goWebChat.UnmarshalClientChangeNameMessage(msg)
 
@@ -55,17 +107,10 @@ func handleMessage(msg []byte, client goWebChat.Client) {
 
 		log.Println(oldName, newName, changeNameMsg.NewName)
 
-		SendName(newName, &client)
+		sendName(newName, client)
 
 		// broadcast the name change to everyone else
 		var outboundChangeNameMsg = goWebChat.NewServerChangeNameMessage(oldName, newName)
-		outboundChangeNameRaw, err := json.Marshal(outboundChangeNameMsg)
-
-		if err != nil {
-			log.Println("Error marshaling message to JSON", outboundChangeNameMsg)
-			return
-		}
-
-		go BroadcastToAllExcept(newName, outboundChangeNameRaw)
+		go broadcastToAllExcept(newName, outboundChangeNameMsg)
 	}
 }

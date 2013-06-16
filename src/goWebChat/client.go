@@ -10,6 +10,9 @@ type Client struct {
 	ReadChan  chan []byte
 	WriteChan chan []byte
 	Closed    chan bool
+	IsAdmin   bool
+	IpAddr    string
+	UserAgent string
 
 	con        *websocket.Conn
 	writeClose chan bool
@@ -19,13 +22,15 @@ func (c *Client) Close() error {
 	return c.con.Close()
 }
 
-func NewClient(name string, ws *websocket.Conn) Client {
+func NewClient(name string, ws *websocket.Conn, userAgent string, ipAddress string) Client {
 
 	client := Client{Name: name, con: ws}
 	client.ReadChan = make(chan []byte, 10)
 	client.WriteChan = make(chan []byte, 10)
 	client.Closed = make(chan bool, 0)
 	client.writeClose = make(chan bool, 0)
+	client.IpAddr = ipAddress
+	client.UserAgent = userAgent
 
 	go client.readLoop()
 	go client.writeLoop()
@@ -59,7 +64,7 @@ func (c *Client) readLoop() {
 		copy(copyBytes, bytes[0:nBytes])
 		c.ReadChan <- copyBytes
 
-		c.logMessage("Read ", bytes[0:nBytes])
+		//c.logMessage("Read ", bytes[0:nBytes])
 	}
 	c.con.Close()
 	c.Closed <- true
@@ -72,7 +77,6 @@ func (c *Client) writeLoop() {
 	for {
 		select {
 		case writeBytes := <-c.WriteChan:
-			c.logMessage("On WriteChan: ", writeBytes)
 			c.con.Write(writeBytes)
 		case <-c.writeClose:
 			c.logMessage("Write Loop stopping due to client closed event")
