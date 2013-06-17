@@ -49,6 +49,7 @@ func (cM *ClientsMap) UnregisterClient(c *Client) error {
 	}
 
 	if index != -1 {
+		cM.clients[index] = nil
 		cM.clients = append(cM.clients[:index], cM.clients[index+1:]...)
 		log.Println("Removed client from map. New size of map: ", len(cM.clients))
 		cM.ClientUnregistered <- c
