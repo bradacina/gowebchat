@@ -103,7 +103,7 @@ func handleMessage(msg []byte, client *goWebChat.Client) {
 
 		// set new name
 		oldName := string([]byte(client.Name))
-		newName := ChangeName(client.Name, changeNameMsg.NewName)
+		newName := changeName(client.Name, changeNameMsg.NewName)
 
 		log.Println(oldName, newName, changeNameMsg.NewName)
 

@@ -13,7 +13,7 @@ import (
 
 var clientsMap goWebChat.ClientsMap
 
-func GetUniqueName(name string) string {
+func getUniqueName(name string) string {
 	clients := clientsMap.GetAllClients()
 
 	good := true
@@ -37,15 +37,15 @@ func GetUniqueName(name string) string {
 	}
 }
 
-func ChangeName(oldName string, newName string) string {
-	uniqueName := GetUniqueName(CleanupName(newName))
+func changeName(oldName string, newName string) string {
+	uniqueName := getUniqueName(cleanupName(newName))
 
 	clientsMap.ReplaceName(oldName, uniqueName)
 
 	return uniqueName
 }
 
-func CleanupName(oldName string) string {
+func cleanupName(oldName string) string {
 	return strings.Map(func(r rune) rune {
 		switch {
 		case r >= 'a' && r <= 'z',
@@ -59,7 +59,7 @@ func CleanupName(oldName string) string {
 	}, oldName)
 }
 
-func ChatHandler(ws *websocket.Conn) {
+func chatHandler(ws *websocket.Conn) {
 
 	req := ws.Request()
 
@@ -77,7 +77,7 @@ func ChatHandler(ws *websocket.Conn) {
 		return
 	}
 
-	newName := GetUniqueName(name[0])
+	newName := getUniqueName(name[0])
 
 	client := goWebChat.NewClient(newName, ws, req.UserAgent(), req.RemoteAddr)
 	clientPtr := &client
@@ -101,10 +101,10 @@ func ChatHandler(ws *websocket.Conn) {
 
 		case disconnectedClient := <-clientsMap.ClientUnregistered:
 
-			// notify everyone that a user has disconnected
+			// notify everyone that a user has disconnected (except the disconnected user of course)
 			var outboundChatMsg = goWebChat.NewServerClientPartMessage(disconnectedClient.Name)
 
-			go broadcastToAll(outboundChatMsg)
+			go broadcastToAllExcept(disconnectedClient.Name, outboundChatMsg)
 
 		case connectedClient := <-clientsMap.ClientRegistered:
 			// notify everyone that a new user has connected
@@ -124,7 +124,7 @@ func main() {
 	clientsMap = goWebChat.NewClientsMap()
 
 	http.Handle("/", http.FileServer(http.Dir("../../html")))
-	http.Handle("/chat", websocket.Handler(ChatHandler))
+	http.Handle("/chat", websocket.Handler(chatHandler))
 	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())

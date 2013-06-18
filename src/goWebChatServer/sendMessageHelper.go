@@ -20,6 +20,8 @@ func sendStatusMessage(client *goWebChat.Client, text string) {
 }
 
 func broadcastToAll(outbound interface{}) {
+	defer log.Println("Exiting BroadcastToAll")
+	log.Println("Entered BroadcastToAll")
 
 	msg, err := json.Marshal(outbound)
 
@@ -36,6 +38,9 @@ func broadcastToAll(outbound interface{}) {
 }
 
 func broadcastToAllExcept(name string, outbound interface{}) {
+
+	defer log.Println("Exiting BroadcastToAllExcept")
+	log.Println("Entering BroadcastToAllExcept")
 
 	msg, err := json.Marshal(outbound)
 
