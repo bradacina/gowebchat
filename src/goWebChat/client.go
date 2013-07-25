@@ -3,16 +3,20 @@ package goWebChat
 import (
 	"code.google.com/p/go.net/websocket"
 	"log"
+	"time"
 )
 
 type Client struct {
-	Name      string
-	ReadChan  chan []byte
-	WriteChan chan []byte
-	Closed    chan bool
-	IsAdmin   bool
-	IpAddr    string
-	UserAgent string
+	Name            string
+	ReadChan        chan []byte
+	WriteChan       chan []byte
+	Closed          chan bool
+	IsAdmin         bool
+	IpAddr          string
+	UserAgent       string
+	ActivityTimeout <-chan time.Time
+	PingTimeout     <-chan time.Time
+	PingPayload     int
 
 	con        *websocket.Conn
 	writeClose chan bool

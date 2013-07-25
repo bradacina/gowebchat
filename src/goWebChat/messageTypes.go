@@ -19,6 +19,18 @@ type ClientChangeNameMessage struct {
 	NewName string
 }
 
+// pong message sent from client to server
+type ClientPongMessage struct {
+	Type    string
+	Payload int
+}
+
+// ping message sent from server to client
+type ServerPingMessage struct {
+	Type    string
+	Payload int
+}
+
 // chat message sent from server to client
 type ServerChatMessage struct {
 	Type string
@@ -93,6 +105,10 @@ func NewServerChangeNameMessage(oldName string, newName string) ServerChangeName
 	return ServerChangeNameMessage{Type: "ServerChangeName", NewName: newName, OldName: oldName}
 }
 
+func NewServerPingMessage(payload int) ServerPingMessage {
+	return ServerPingMessage{Type: "ServerPingMessage", Payload: payload}
+}
+
 func UnmarshalClientChatMessage(msg []byte) (ClientChatMessage, error) {
 	var chatMsg ClientChatMessage
 	err := json.Unmarshal(msg, &chatMsg)
@@ -109,4 +125,13 @@ func UnmarshalClientChangeNameMessage(msg []byte) (ClientChangeNameMessage, erro
 		log.Println("Error unmarshalling ClientChatMessage", err)
 	}
 	return changeNameMsg, err
+}
+
+func UnmarshalClientPongMessage(msg []byte) (ClientPongMessage, error) {
+	var clientPongMessage ClientPongMessage
+	err := json.Unmarshal(msg, &clientPongMessage)
+	if err != nil {
+		log.Println("Error unmarshalling ClientPongMessage", err)
+	}
+	return clientPongMessage, err
 }

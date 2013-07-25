@@ -89,3 +89,17 @@ func sendName(name string, client *goWebChat.Client) {
 
 	client.WriteChan <- outboundSetNameRaw
 }
+
+func sendPing(client *goWebChat.Client) {
+	// send the ping message
+	client.PingPayload = random(123524, 967845)
+	var outboundPingMsg = goWebChat.NewServerPingMessage(client.PingPayload)
+	outboundPingRaw, err := json.Marshal(outboundPingMsg)
+
+	if err != nil {
+		log.Println("Error marshalling message to JSON", outboundPingMsg)
+		return
+	}
+
+	client.WriteChan <- outboundPingRaw
+}

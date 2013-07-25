@@ -66,11 +66,25 @@ func handleMessage(msg []byte, client *goWebChat.Client) {
 	json.Unmarshal(msg, &messageType)
 	log.Println("MessageType ", messageType)
 
+	// what does this if do?
 	if messageType == (goWebChat.MessageType{}) {
 		return
 	}
 
 	switch messageType.Type {
+	case "ClientPong":
+		pongMsg, err := goWebChat.UnmarshalClientPongMessage(msg)
+
+		if err != nil {
+			log.Println("Could not unmarshal incoming message from client: ", msg)
+			return
+		}
+
+		// if we got the correct pong reply then stop the ping timer
+		if client.PingPayload == pongMsg.Payload {
+			client.PingTimeout = nil
+		}
+
 	case "ClientChat":
 		chatMsg, err := goWebChat.UnmarshalClientChatMessage(msg)
 

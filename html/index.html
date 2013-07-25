@@ -64,12 +64,12 @@
 		wss = new WebSocket("ws://"+document.domain+":8081/chat?name=User"+Math.floor(Math.random()*100+1));
 		
 		wss.onerror = function(status) {
-			debugger;
+			//debugger;
 			console.log(status);
 		}
 		
 		wss.onclose = function(status) {
-			debugger;
+			//debugger;
 			$("#ChatReceive").prepend("<"+ now.toLocaleTimeString() + "> You have been disconnected<br/>");
 		}
 		
@@ -132,6 +132,10 @@
 			
 			else if(msg.Type == "ServerChangeName") {
 				clientChangedName(msg.OldName, msg.NewName);
+			}
+			
+			else if(msg.Type == "ServerPingMessage") {
+				sendPong(msg.Payload);
 			}
 		}
 	});
@@ -245,6 +249,14 @@
 		obj.Type = "ClientChat";
 		obj.Chat = msg;
 				
+		wss.send(JSON.stringify(obj));
+	}
+	
+	function sendPong(payload) {
+		var obj = new Object();
+		obj.Type = "ClientPong";
+		obj.Payload = payload;
+		
 		wss.send(JSON.stringify(obj));
 	}
 	

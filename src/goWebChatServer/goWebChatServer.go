@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"code.google.com/p/go.net/websocket"
 )
@@ -35,6 +36,11 @@ func getUniqueName(name string) string {
 			good = true
 		}
 	}
+}
+
+func random(min, max int) int {
+	rand.Seed(time.Now().Unix())
+	return rand.Intn(max-min) + min
 }
 
 func changeName(oldName string, newName string) string {
@@ -89,6 +95,9 @@ func chatHandler(ws *websocket.Conn) {
 
 	// client process loop
 	for {
+
+		clientPtr.ActivityTimeout = time.After(30 * time.Second)
+
 		select {
 		case <-clientPtr.Closed:
 			log.Println("Connection on client ", client.Name, " was closed")
@@ -115,6 +124,19 @@ func chatHandler(ws *websocket.Conn) {
 			go sendName(connectedClient.Name, connectedClient)
 
 			go sendListOfConnectedClients(connectedClient)
+
+		case <-clientPtr.ActivityTimeout:
+			// send ping
+			if clientPtr.PingTimeout == nil {
+				go sendPing(clientPtr)
+				clientPtr.PingTimeout = time.After(30 * time.Second)
+			}
+
+		case <-clientPtr.PingTimeout:
+			// we did not receive a reply to our timeout so disconnect this user
+			clientPtr.Close()
+			log.Println("User ", client.Name, " timed out.")
+
 		}
 	}
 }

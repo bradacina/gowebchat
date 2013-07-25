@@ -1,3 +1,5 @@
+// the map keeps track of connected clients
+
 package goWebChat
 
 import (
