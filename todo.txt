@@ -1,0 +1,5 @@
+1. improve look and feel
+2. cache last line of text sent to the server so the user
+can recall it with UP arrow
+5. add capability to log text
+6. add capability to register users
