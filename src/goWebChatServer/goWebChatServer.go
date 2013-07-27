@@ -108,23 +108,6 @@ func chatHandler(ws *websocket.Conn) {
 
 			handleMessage(readBytes, clientPtr)
 
-		case disconnectedClient := <-clientsMap.ClientUnregistered:
-
-			// notify everyone that a user has disconnected (except the disconnected user of course)
-			var outboundChatMsg = goWebChat.NewServerClientPartMessage(disconnectedClient.Name)
-
-			go broadcastToAllExcept(disconnectedClient.Name, outboundChatMsg)
-
-		case connectedClient := <-clientsMap.ClientRegistered:
-			// notify everyone that a new user has connected
-			var outboundChatMsg = goWebChat.NewServerClientJoinMessage(connectedClient.Name)
-
-			go broadcastToAllExcept(connectedClient.Name, outboundChatMsg)
-
-			go sendName(connectedClient.Name, connectedClient)
-
-			go sendListOfConnectedClients(connectedClient)
-
 		case <-clientPtr.ActivityTimeout:
 			// send ping
 			if clientPtr.PingTimeout == nil {
@@ -141,9 +124,34 @@ func chatHandler(ws *websocket.Conn) {
 	}
 }
 
+func clientMapLoop() {
+	for {
+		select {
+		case disconnectedClient := <-clientsMap.ClientUnregistered:
+			// notify everyone that a user has disconnected (except the disconnected user of course)
+			var outboundChatMsg = goWebChat.NewServerClientPartMessage(disconnectedClient.Name)
+
+			go broadcastToAllExcept(disconnectedClient.Name, outboundChatMsg)
+
+		case connectedClient := <-clientsMap.ClientRegistered:
+			// notify everyone that a new user has connected
+			var outboundChatMsg = goWebChat.NewServerClientJoinMessage(connectedClient.Name)
+
+			go broadcastToAllExcept(connectedClient.Name, outboundChatMsg)
+
+			go sendName(connectedClient.Name, connectedClient)
+
+			go sendListOfConnectedClients(connectedClient)
+
+		}
+	}
+
+}
+
 func main() {
 
 	clientsMap = goWebChat.NewClientsMap()
+	go clientMapLoop()
 
 	http.Handle("/", http.FileServer(http.Dir("../../html")))
 	http.Handle("/chat", websocket.Handler(chatHandler))
