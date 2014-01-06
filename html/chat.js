@@ -29,7 +29,7 @@ $(document).ready( function() {
 
 function connect() {
 
-	wss = new WebSocket("ws://"+document.domain+":8081/chat?name=User"+Math.floor(Math.random()*100+1));
+	wss = new WebSocket("wss://"+document.domain+"/chatws/chat?name=User"+Math.floor(Math.random()*100+1));
 	
 	wss.onopen = function(status) {
 
@@ -233,7 +233,7 @@ function addChatMessage(msg) {
 }
 
 function sendChat(event) {
-	if( event.charCode != 13)
+	if( event.keyCode != 13)
 	{
 		return;
 	}
