@@ -1,5 +1,0 @@
-#!/bin/bash
-
-cd src/goWebChatServer
-go build goWebChatServer.go messageHandler.go sendMessageHelper.go
-
