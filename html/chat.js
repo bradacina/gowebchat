@@ -19,7 +19,7 @@ $(document).ready( function() {
 	$("#ChatClear").click(onChatClear);
 	
 	$("#ChatSend").click(function() {	
-		sendChat({charCode:13});
+		sendChat({keyCode:13});
 	});
 	
 	$("#ChatInput").keypress(sendChat);
