@@ -1,8 +1,8 @@
 package main
 
 import (
+	"code.metaconstudios.com/gowebchat/goWebChat"
 	"encoding/json"
-	"goWebChat"
 	"log"
 )
 
