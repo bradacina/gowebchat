@@ -1,7 +1,7 @@
 package main
 
 import (
-	"goWebChat"
+	"code.metaconstudios.com/gowebchat/goWebChat"
 	"log"
 	"math/rand"
 	"net/http"
@@ -65,6 +65,22 @@ func cleanupName(oldName string) string {
 	}, oldName)
 }
 
+func getIp(req *http.Request) string {
+	ipslice, ok := req.Header["X-Real-Ip"]
+	var ip string
+	if !ok {
+		ip = req.RemoteAddr
+	} else {
+		ip = ipslice[0]
+	}
+	index := strings.Index(ip, ":")
+	if index != -1 {
+		ip = ip[0:index]
+	}
+
+	return ip
+}
+
 func chatHandler(ws *websocket.Conn) {
 
 	req := ws.Request()
@@ -85,7 +101,7 @@ func chatHandler(ws *websocket.Conn) {
 
 	newName := getUniqueName(name[0])
 
-	client := goWebChat.NewClient(newName, ws, req.UserAgent(), req.RemoteAddr)
+	client := goWebChat.NewClient(newName, ws, req.UserAgent(), getIp(req))
 	clientPtr := &client
 
 	defer log.Println("Exiting handler function.")
