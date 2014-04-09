@@ -169,7 +169,7 @@ func main() {
 	clientsMap = goWebChat.NewClientsMap()
 	go clientMapLoop()
 
-	http.Handle("/", http.FileServer(http.Dir("../../html")))
+	http.Handle("/", http.FileServer(http.Dir("html")))
 	http.Handle("/chat", websocket.Handler(chatHandler))
 	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
