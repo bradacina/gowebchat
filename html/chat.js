@@ -28,24 +28,20 @@ $(document).ready( function() {
 });
 
 function connect() {
-
-	wss = new WebSocket("wss://"+document.domain+"/chatws/chat?name=User"+Math.floor(Math.random()*100+1));
+	protocol = location.protocol == "https:" ? "wss:" : "ws:";
+	wss = new WebSocket(protocol + "//" + location.host+"/chat?name=User"+Math.floor(Math.random()*100+1));
 	
 	wss.onopen = function(status) {
-
 		// stop trying to connect
 		clearInterval(retryConnectionInterval);
 		retryConnectionInterval = null;
 	}
 
 	wss.onerror = function(status) {
-		// debugger;
 		console.log(status);
 	}
 	
 	wss.onclose = function(status) {
-
-		// debugger
 		$("#ChatUsers").html("");
 
 		var now = new Date();
