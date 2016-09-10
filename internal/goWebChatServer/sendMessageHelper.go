@@ -20,7 +20,7 @@ func sendStatusMessage(client *goWebChat.Client, text string) {
 	client.Send(outboundRaw)
 }
 
-func broadcastToAll(outbound interface{}) {
+func (s *Server) broadcastToAll(outbound interface{}) {
 	defer log.Println("Exiting BroadcastToAll")
 	log.Println("Entered BroadcastToAll")
 
@@ -31,14 +31,14 @@ func broadcastToAll(outbound interface{}) {
 		return
 	}
 
-	clients := clientsMap.GetAllClients()
+	clients := s.clientsMap.GetAllClients()
 
 	for _, k := range clients {
 		k.Send(msg)
 	}
 }
 
-func broadcastToAllExcept(name string, outbound interface{}) {
+func (s *Server) broadcastToAllExcept(name string, outbound interface{}) {
 
 	defer log.Println("Exiting BroadcastToAllExcept")
 	log.Println("Entering BroadcastToAllExcept")
@@ -50,7 +50,7 @@ func broadcastToAllExcept(name string, outbound interface{}) {
 		return
 	}
 
-	clients := clientsMap.GetAllClients()
+	clients := s.clientsMap.GetAllClients()
 
 	for _, k := range clients {
 		if k.Name() != name {
@@ -59,9 +59,9 @@ func broadcastToAllExcept(name string, outbound interface{}) {
 	}
 }
 
-func sendListOfConnectedClients(c *goWebChat.Client) {
+func (s *Server) sendListOfConnectedClients(c *goWebChat.Client) {
 	var users string
-	clients := clientsMap.GetAllClients()
+	clients := s.clientsMap.GetAllClients()
 
 	for _, k := range clients {
 		users = users + "," + k.Name()

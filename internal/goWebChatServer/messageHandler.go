@@ -10,7 +10,7 @@ import (
 	"github.com/bradacina/gowebchat/internal/goWebChat"
 )
 
-func handleCommand(msg string, client *goWebChat.Client) {
+func (s *Server) handleCommand(msg string, client *goWebChat.Client) {
 	log.Println("Got command message: ", msg)
 
 	tokens := strings.Split(msg, " ")
@@ -39,7 +39,7 @@ func handleCommand(msg string, client *goWebChat.Client) {
 			return
 		}
 
-		whoisClient, ok := clientsMap.GetClient(args[0])
+		whoisClient, ok := s.clientsMap.GetClient(args[0])
 
 		if ok {
 			msg := fmt.Sprintf("<b>%v</b> (Admin:<b>%v</b>) has connected from <b>%v</b> using\n<b>%v</b>.",
@@ -52,7 +52,7 @@ func handleCommand(msg string, client *goWebChat.Client) {
 			return
 		}
 
-		clientToKick, ok := clientsMap.GetClient(args[0])
+		clientToKick, ok := s.clientsMap.GetClient(args[0])
 
 		if ok {
 			clientToKick.Close()
@@ -60,7 +60,7 @@ func handleCommand(msg string, client *goWebChat.Client) {
 	}
 }
 
-func handleMessage(msg []byte, client *goWebChat.Client) {
+func (s *Server) handleMessage(msg []byte, client *goWebChat.Client) {
 
 	var messageType goWebChat.MessageType
 
@@ -96,14 +96,14 @@ func handleMessage(msg []byte, client *goWebChat.Client) {
 
 		// treat special case if chat message starts with / which means it's a command
 		if chatMsg.Chat[0] == '/' {
-			handleCommand(chatMsg.Chat[1:], client)
+			s.handleCommand(chatMsg.Chat[1:], client)
 			return
 		}
 
 		chatMessageContent := html.EscapeString(chatMsg.Chat)
 		var outboundChatMsg = goWebChat.NewServerChatMessage(chatMessageContent, client.Name())
 
-		go broadcastToAll(outboundChatMsg)
+		go s.broadcastToAll(outboundChatMsg)
 	case "ChangeName":
 		changeNameMsg, err := goWebChat.UnmarshalClientChangeNameMessage(msg)
 
@@ -118,7 +118,7 @@ func handleMessage(msg []byte, client *goWebChat.Client) {
 
 		// set new name
 		oldName := string([]byte(client.Name()))
-		newName := changeName(client.Name(), changeNameMsg.NewName)
+		newName := s.changeName(client.Name(), changeNameMsg.NewName)
 
 		log.Println(oldName, newName, changeNameMsg.NewName)
 
@@ -126,6 +126,6 @@ func handleMessage(msg []byte, client *goWebChat.Client) {
 
 		// broadcast the name change to everyone else
 		var outboundChangeNameMsg = goWebChat.NewServerChangeNameMessage(oldName, newName)
-		go broadcastToAllExcept(newName, outboundChangeNameMsg)
+		go s.broadcastToAllExcept(newName, outboundChangeNameMsg)
 	}
 }

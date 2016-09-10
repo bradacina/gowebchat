@@ -8,8 +8,9 @@ import (
 )
 
 func main() {
+	server := goWebChatServer.NewServer()
 	http.Handle("/", http.FileServer(http.Dir("html")))
-	http.Handle("/chat", websocket.Handler(goWebChatServer.ChatHandler))
+	http.Handle("/chat", websocket.Handler(server.ChatHandler))
 	err := http.ListenAndServe(":8081", nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
