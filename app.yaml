@@ -1,11 +1,7 @@
 application: webchat
-version: 1.0
 runtime: go
 api_version: go1
 
 handlers:
-- url: /
-  script: _go_app
-
-- url: /chat
+- url: /.*
   script: _go_app
