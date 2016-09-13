@@ -1,3 +1,3 @@
-Run 'script ./exportPath'
+Compile and run!
 
-go get code.google.com/p/go.net/websocket
+Point your browser at http://localhost:8081
